@@ -25,5 +25,8 @@
   "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^5.10.1"
   }
 }
